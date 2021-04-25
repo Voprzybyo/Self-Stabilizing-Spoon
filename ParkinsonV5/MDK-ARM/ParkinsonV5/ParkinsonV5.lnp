@@ -1,4 +1,4 @@
---cpu=Cortex-M4.fp
+--cpu=Cortex-M4.fp.sp
 "parkinsonv5\startup_stm32f429xx.o"
 "parkinsonv5\tj_mpu6050.o"
 "parkinsonv5\main.o"
