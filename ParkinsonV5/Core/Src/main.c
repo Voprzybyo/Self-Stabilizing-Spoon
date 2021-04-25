@@ -96,6 +96,9 @@ int main(void)
   MX_USART2_UART_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+	int foo = 700;
+	int bar = 700;
+	
   //1. Initialise the MPU6050 module and I2C
   MPU6050_Init(&hi2c1);
   //2. Configure Accel and Gyro parameters
@@ -114,6 +117,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+		/*
 		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 700);
 		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 1000);
 		HAL_Delay(2000);
@@ -124,6 +128,7 @@ int main(void)
 		
 		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 2600);
 		HAL_Delay(2000);
+		*/
 		/* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -137,6 +142,45 @@ int main(void)
 
     //HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
     //HAL_Delay(10);
+		
+		//__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 700);
+		//__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 700);
+		//HAL_Delay(5000);
+		
+		MPU6050_Get_Accel_Scale(&myAccelScaled);
+    MPU6050_Get_Gyro_Scale(&myGyroScaled);
+		if(myGyroScaled.y > 10)
+		{
+			foo += 50;
+			if(foo > 2600)
+				foo = 2600;
+			__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, foo);
+		}
+		
+		if(myGyroScaled.y < -10)
+		{
+			foo -= 50;
+			if(foo < 700)
+				foo = 700;
+			__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, foo);
+		}
+		if(myGyroScaled.x > 10)
+		{
+			bar += 50;
+			if(bar > 2600)
+				bar = 2600;
+			__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, bar);
+		}
+		
+		if(myGyroScaled.x < -10)
+		{
+			bar -= 50;
+			if(bar < 700)
+				bar = 700;
+			__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, bar);
+		}
+		
+		
   }
   /* USER CODE END 3 */
 }
