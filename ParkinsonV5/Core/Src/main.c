@@ -36,7 +36,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define SENSITIVITY 80
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -111,6 +111,11 @@ int main(void)
 
 	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
+	
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 450);
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 700);
+	HAL_Delay(1000);
+	
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -118,15 +123,16 @@ int main(void)
   while (1)
   {
 		/*
-		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 700);
-		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 1000);
+		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 450);
+		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 700);
 		HAL_Delay(2000);
 		
-		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 1700);
-		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 2000);
+		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 1450);
+		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 1700);
     HAL_Delay(2000);
 		
-		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 2600);
+		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 2350);
+		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 2600);
 		HAL_Delay(2000);
 		*/
 		/* USER CODE END WHILE */
@@ -145,11 +151,13 @@ int main(void)
 		
 		//__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 700);
 		//__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 700);
-		//HAL_Delay(5000);
+		//HAL_Delay(1000);
+		
 		
 		MPU6050_Get_Accel_Scale(&myAccelScaled);
     MPU6050_Get_Gyro_Scale(&myGyroScaled);
-		if(myGyroScaled.y > 10)
+		
+		if(myGyroScaled.y > SENSITIVITY)
 		{
 			foo += 50;
 			if(foo > 2600)
@@ -157,14 +165,14 @@ int main(void)
 			__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, foo);
 		}
 		
-		if(myGyroScaled.y < -10)
+		if(myGyroScaled.y < -SENSITIVITY)
 		{
 			foo -= 50;
 			if(foo < 700)
 				foo = 700;
 			__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, foo);
 		}
-		if(myGyroScaled.x > 10)
+		if(myGyroScaled.x > SENSITIVITY)
 		{
 			bar += 50;
 			if(bar > 2600)
@@ -172,13 +180,16 @@ int main(void)
 			__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, bar);
 		}
 		
-		if(myGyroScaled.x < -10)
+		if(myGyroScaled.x < -SENSITIVITY)
 		{
 			bar -= 50;
 			if(bar < 700)
 				bar = 700;
 			__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, bar);
 		}
+		HAL_Delay(10);
+		
+		
 		
 		
   }
