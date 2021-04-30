@@ -873,13 +873,14 @@ ARM Macro Assembler    Page 14
   448 0000001C                 END
               00000000 
               00000000 
-Command Line: --debug --xref --diag_suppress=9931 --cpu=Cortex-M4.fp --apcs=int
-erwork --depend=parkinsonv5\startup_stm32f429xx.d -oparkinsonv5\startup_stm32f4
-29xx.o -I.\RTE\_ParkinsonV5 -ID:\Keil\ARM\CMSIS\5.5.1\CMSIS\Core\Include -ID:\K
-eil\Keil\STM32F4xx_DFP\2.14.0\Drivers\CMSIS\Device\ST\STM32F4xx\Include --prede
-fine="__EVAL SETA 1" --predefine="__MICROLIB SETA 1" --predefine="__UVISION_VER
-SION SETA 528" --predefine="_RTE_ SETA 1" --predefine="STM32F429xx SETA 1" --li
-st=startup_stm32f429xx.lst startup_stm32f429xx.s
+Command Line: --debug --xref --diag_suppress=9931 --cpu=Cortex-M4.fp.sp --apcs=
+interwork --depend=parkinsonv5\startup_stm32f429xx.d -oparkinsonv5\startup_stm3
+2f429xx.o -I.\RTE\_ParkinsonV5 -IC:\Users\artur\AppData\Local\Arm\Packs\ARM\CMS
+IS\5.6.0\CMSIS\Core\Include -IC:\Users\artur\AppData\Local\Arm\Packs\Keil\STM32
+F4xx_DFP\2.14.0\Drivers\CMSIS\Device\ST\STM32F4xx\Include --predefine="__MICROL
+IB SETA 1" --predefine="__UVISION_VERSION SETA 529" --predefine="_RTE_ SETA 1" 
+--predefine="STM32F429xx SETA 1" --list=startup_stm32f429xx.lst startup_stm32f4
+29xx.s
 
 
 
@@ -2051,4 +2052,4 @@ Symbol: __main
       At line 185 in file startup_stm32f429xx.s
 Comment: __main used once
 2 symbols
-455 symbols in table
+454 symbols in table
