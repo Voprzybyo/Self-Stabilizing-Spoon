@@ -1,3 +1,5 @@
 *.o
 *.d
 *.crf
+.mxproject
+/MDK-ARM/ParkinsonV5_ParkinsonV5.dep
