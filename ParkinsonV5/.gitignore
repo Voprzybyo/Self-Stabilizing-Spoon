@@ -1,12 +1,8 @@
-*.o
-*.d
-*.crf
-.vscode/*
-Drivers/*
-
+.vscode/
 *.rar
 *.o
 *.d
+*.hex
 *.crf
 *.htm
 *.dep
