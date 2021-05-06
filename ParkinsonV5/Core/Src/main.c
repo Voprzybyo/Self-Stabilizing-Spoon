@@ -23,6 +23,7 @@
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
+#include "math.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -47,7 +48,14 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-volatile uint32_t Duty = 0;
+//volatile uint32_t Duty = 0;
+float AccX, AccY, AccZ;
+float GyroX, GyroY, GyroZ;
+float accAngleX, accAngleY, gyroAngleX, gyroAngleY, gyroAngleZ;
+float roll, pitch, yaw;
+float AccErrorX, AccErrorY, GyroErrorX, GyroErrorY, GyroErrorZ;
+float elapsedTime, currentTime, previousTime;
+int c = 0;
 
 /* USER CODE END PV */
 
@@ -95,14 +103,18 @@ int main(void)
   MX_I2C1_Init();
   MX_USART2_UART_Init();
   MX_TIM1_Init();
+	
   /* USER CODE BEGIN 2 */
-	int foo = 700;
-	int bar = 700;
+	//int foo = 700;
+	//int bar = 700;
+	
+	
+	
 	
   //1. Initialise the MPU6050 module and I2C
   MPU6050_Init(&hi2c1);
   //2. Configure Accel and Gyro parameters
-  myMpuConfig.Accel_Full_Scale = AFS_SEL_16g;
+  myMpuConfig.Accel_Full_Scale = AFS_SEL_2g;
   myMpuConfig.ClockSource = Internal_8MHz;
   myMpuConfig.CONFIG_DLPF = DLPF_184A_188G_Hz;
   myMpuConfig.Gyro_Full_Scale = FS_SEL_500;
@@ -153,7 +165,7 @@ int main(void)
 		//__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 700);
 		//HAL_Delay(1000);
 		
-		
+		/*
 		MPU6050_Get_Accel_Scale(&myAccelScaled);
     MPU6050_Get_Gyro_Scale(&myGyroScaled);
 		
@@ -188,10 +200,36 @@ int main(void)
 			__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, bar);
 		}
 		HAL_Delay(10);
+		*/
 		
+		MPU6050_Get_Accel_Scale(&myAccelScaled);		
+		AccX = myAccelScaled.x / 16384.0;
+		AccY = myAccelScaled.y / 16384.0;
+		AccZ = myAccelScaled.z / 16384.0;
 		
+		accAngleX = (atan(AccY / sqrt(pow(AccX, 2) + pow(AccZ, 2))) * 180 / 3.14159265358979323846) - 0.58; 
+		accAngleY = (atan(-1 * AccX / sqrt(pow(AccY, 2) + pow(AccZ, 2))) * 180 / 3.14159265358979323846) + 1.58;
 		
+		previousTime = currentTime;
+		currentTime = HAL_GetTick();
+		elapsedTime = (currentTime - previousTime) / 1000;
 		
+		MPU6050_Get_Gyro_Scale(&myGyroScaled);
+		GyroX = myGyroScaled.x / 131.0;
+		GyroY = myGyroScaled.y / 131.0;
+		GyroZ = myGyroScaled.z / 131.0;
+		
+		GyroX = GyroX + 0.56; // GyroErrorX ~(-0.56)
+		GyroY = GyroY - 2; // GyroErrorY ~(2)
+		GyroZ = GyroZ + 0.79;
+	
+		gyroAngleX = gyroAngleX + GyroX * elapsedTime; // deg/s * s = deg
+		gyroAngleY = gyroAngleY + GyroY * elapsedTime;
+		yaw =  yaw + GyroZ * elapsedTime;
+		
+		roll = 0.96 * gyroAngleX + 0.04 * accAngleX;
+		pitch = 0.96 * gyroAngleY + 0.04 * accAngleY;
+		HAL_Delay(100);
   }
   /* USER CODE END 3 */
 }
