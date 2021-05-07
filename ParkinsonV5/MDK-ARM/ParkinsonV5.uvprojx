@@ -641,6 +641,16 @@
               <FileType>1</FileType>
               <FilePath>../Core/Src/stm32f4xx_hal_msp.c</FilePath>
             </File>
+            <File>
+              <FileName>Config.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Core\Inc\Config.h</FilePath>
+            </File>
+            <File>
+              <FileName>Config.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\Config.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

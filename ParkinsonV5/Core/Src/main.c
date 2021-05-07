@@ -1,4 +1,3 @@
-/* USER CODE BEGIN Header */
 /**
   ******************************************************************************
   * @file           : main.c
@@ -16,8 +15,7 @@
   *
   ******************************************************************************
   */
-/* USER CODE END Header */
-/* Includes ------------------------------------------------------------------*/
+
 #include "main.h"
 #include "i2c.h"
 #include "tim.h"
@@ -25,29 +23,14 @@
 #include "gpio.h"
 #include <math.h>
 
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
 #include "TJ_MPU6050.h"
-/* USER CODE END Includes */
+#include "Config.h"
 
-/* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN PTD */
-
-/* USER CODE END PTD */
-
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
 #define SENSITIVITY 80
-/* USER CODE END PD */
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN PM */
-
-/* USER CODE END PM */
-
-/* Private variables ---------------------------------------------------------*/
-
-/* USER CODE BEGIN PV */
 //volatile uint32_t Duty = 0;
 float AccX, AccY, AccZ;
 float GyroX, GyroY, GyroZ;
@@ -57,67 +40,33 @@ float AccErrorX, AccErrorY, GyroErrorX, GyroErrorY, GyroErrorZ;
 float elapsedTime, currentTime, previousTime;
 int c = 0;
 
-/* USER CODE END PV */
-
-/* Private function prototypes -----------------------------------------------*/
-void SystemClock_Config(void);
-/* USER CODE BEGIN PFP */
 float map(float val, float I_Min, float I_Max, float O_Min, float O_Max);
 void calculate_IMU_error(MPU_ConfigTypeDef myMpuConfig);
 
-/* USER CODE END PFP */
-
-/* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
 RawData_Def myAccelRaw, myGyroRaw;
 ScaledData_Def myAccelScaled, myGyroScaled;
-/* USER CODE END 0 */
 
-/**
-  * @brief  The application entry point.
-  * @retval int
-  */
 int main(void)
 {
-  /* USER CODE BEGIN 1 */
   MPU_ConfigTypeDef myMpuConfig;
-  /* USER CODE END 1 */
 
-  /* MCU Configuration--------------------------------------------------------*/
-
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
-
-  /* USER CODE BEGIN Init */
-
-  /* USER CODE END Init */
-
-  /* Configure the system clock */
   SystemClock_Config();
 
-  /* USER CODE BEGIN SysInit */
-
-  /* USER CODE END SysInit */
-
-  /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_I2C1_Init();
   MX_USART2_UART_Init();
   MX_TIM1_Init();
-	
-  /* USER CODE BEGIN 2 */
-	volatile int rollCounter = 0;
-	volatile int pitchCounter = 0;
-	
-	volatile int cntOne = 0;
-	volatile int cntTwo = 0;
-	
-	
-	
-	
-  //1. Initialise the MPU6050 module and I2C
-  MPU6050_Init(&hi2c1);
-  //2. Configure Accel and Gyro parameters
+
+  volatile int rollCounter = 0;
+  volatile int pitchCounter = 0;
+
+  volatile int cntOne = 0;
+  volatile int cntTwo = 0;
+
+  MPU6050_Init(&hi2c1); //  Initialise the MPU6050 module and I2C
+
+  //Configure Accel and Gyro parameters
   myMpuConfig.Accel_Full_Scale = AFS_SEL_2g;
   myMpuConfig.ClockSource = Internal_8MHz;
   myMpuConfig.CONFIG_DLPF = DLPF_21A_20G_Hz;
@@ -125,82 +74,71 @@ int main(void)
   myMpuConfig.Sleep_Mode_Bit = 0; //1: sleep mode, 0: normal mode
   MPU6050_Config(&myMpuConfig);
 
-	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
-	
-	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 1400);
-	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 1900);
-	
-	//__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 90);
-	//__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 90);
-	calculate_IMU_error(myMpuConfig);
-	HAL_Delay(5000);
-	
-  /* USER CODE END 2 */
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
 
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 1400);
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 1900);
+
+  calculate_IMU_error(myMpuConfig);
+  HAL_Delay(4000);
+
   while (1)
-  {	
-		MPU6050_Get_Accel_Scale(&myAccelScaled);		
-		AccX = myAccelScaled.x / 16384.0;
-		AccY = myAccelScaled.y / 16384.0;
-		AccZ = myAccelScaled.z / 16384.0;
-		
-		accAngleX = (atan(AccY / sqrt(pow(AccX, 2) + pow(AccZ, 2))) * 180 / 3.14159265358979323846) - 0.89; 
-		accAngleY = (atan(-1 * AccX / sqrt(pow(AccY, 2) + pow(AccZ, 2))) * 180 / 3.14159265358979323846) + 0.146;
-		
-		previousTime = currentTime;
-		currentTime = HAL_GetTick();
-		elapsedTime = (currentTime - previousTime) / 1000;
-		
-		MPU6050_Get_Gyro_Scale(&myGyroScaled);
-		GyroX = myGyroScaled.x / 131.0;
-		GyroY = myGyroScaled.y / 131.0;
-		GyroZ = myGyroScaled.z / 131.0;
-		
-		GyroX = GyroX - 0.033; // GyroErrorX ~(-0.56)
-		GyroY = GyroY - 0.028; // GyroErrorY ~(2)
-		GyroZ = GyroZ + 0.004;
-	
-		gyroAngleX = GyroX * elapsedTime; // deg/s * s = deg
-		gyroAngleY =  GyroY * elapsedTime;
-		
-		yaw =  GyroZ * elapsedTime;	
-		roll = (0.96 * gyroAngleX + 0.04 * accAngleX) * 180 / 3.14159265358979323846;
-		pitch = (0.96 * gyroAngleY + 0.04 * accAngleY) * 180 / 3.14159265358979323846 ;
-		
-		
-		rollCounter = map((int) roll, -180, 180, 450, 2350);
-		pitchCounter = map((int) pitch , -180, 180, 700, 2600);
+  {
+    MPU6050_Get_Accel_Scale(&myAccelScaled);
+    AccX = myAccelScaled.x / 16384.0f;
+    AccY = myAccelScaled.y / 16384.0f;
+    AccZ = myAccelScaled.z / 16384.0f;
 
-		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, rollCounter);
-		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, pitchCounter);
-	
-			
-		
-		//HAL_Delay(10);
+    accAngleX = (atan(AccY / sqrt(pow(AccX, 2) + pow(AccZ, 2))) * 180 / (float) M_PI) - 0.89f;
+    accAngleY = (atan(-1 * AccX / sqrt(pow(AccY, 2) + pow(AccZ, 2))) * 180 / (float) M_PI) + 0.146f;
+
+    previousTime = currentTime;
+    currentTime = HAL_GetTick();
+    elapsedTime = (currentTime - previousTime) / 1000;
+
+    MPU6050_Get_Gyro_Scale(&myGyroScaled);
+    GyroX = myGyroScaled.x / 131.0f;
+    GyroY = myGyroScaled.y / 131.0f;
+    GyroZ = myGyroScaled.z / 131.0f;
+
+    GyroX = GyroX - 0.033f; // GyroErrorX ~(-0.56)
+    GyroY = GyroY - 0.028f; // GyroErrorY ~(2)
+    GyroZ = GyroZ + 0.004f;
+
+    gyroAngleX = GyroX * elapsedTime; // deg/s * s = deg
+    gyroAngleY = GyroY * elapsedTime;
+
+    yaw = GyroZ * elapsedTime;
+    roll = (0.96f * gyroAngleX + 0.04f * accAngleX) * 180 / (float)M_PI;
+    pitch = (0.96f * gyroAngleY + 0.04f * accAngleY) * 180 / (float)M_PI;
+
+    rollCounter = map((int)roll, -180, 180, 450, 2350);
+    pitchCounter = map((int)pitch, -180, 180, 700, 2600);
+
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, rollCounter);
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, pitchCounter);
+
+    //HAL_Delay(10);
   }
-  /* USER CODE END 3 */
 }
 
 float map(float val, float I_Min, float I_Max, float O_Min, float O_Max)
 {
-		return(((val-I_Min)*((O_Max-O_Min)/(I_Max-I_Min)))+O_Min);
+  return (((val - I_Min) * ((O_Max - O_Min) / (I_Max - I_Min))) + O_Min);
 }
 
-void calculate_IMU_error(MPU_ConfigTypeDef myMpuConfig) {
-  // We can call this funtion in the setup section to calculate the accelerometer and gyro data error. From here we will get the error values used in the above equations printed on the Serial Monitor.
-  // Note that we should place the IMU flat in order to get the proper values, so that we then can the correct values
-  // Read accelerometer values 200 times
-  while (c < 200) {
-		MPU6050_Get_Accel_Scale(&myAccelScaled);		
-    AccX = myAccelScaled.x / 16384.0 ;
-    AccY = myAccelScaled.y / 16384.0 ;
-    AccZ = myAccelScaled.z / 16384.0 ;
+void calculate_IMU_error(MPU_ConfigTypeDef myMpuConfig)
+{
+  while (c < 200)
+  {
+    MPU6050_Get_Accel_Scale(&myAccelScaled);
+    AccX = myAccelScaled.x / 16384.0f;
+    AccY = myAccelScaled.y / 16384.0f;
+    AccZ = myAccelScaled.z / 16384.0f;
     // Sum all readings
-    AccErrorX = AccErrorX + ((atan((AccY) / sqrt(pow((AccX), 2) + pow((AccZ), 2))) * 180 / 3.14159265358979323846));
-    AccErrorY = AccErrorY + ((atan(-1 * (AccX) / sqrt(pow((AccY), 2) + pow((AccZ), 2))) * 180 / 3.14159265358979323846));
+    AccErrorX = AccErrorX + ((atan((AccY) / sqrt(pow((AccX), 2) + pow((AccZ), 2))) * 180 / M_PI));
+    AccErrorY = AccErrorY + ((atan(-1 * (AccX) / sqrt(pow((AccY), 2) + pow((AccZ), 2))) * 180 / M_PI));
     c++;
   }
   //Divide the sum by 200 to get the error value
@@ -208,15 +146,16 @@ void calculate_IMU_error(MPU_ConfigTypeDef myMpuConfig) {
   AccErrorY = AccErrorY / 200;
   c = 0;
   // Read gyro values 200 times
-  while (c < 200) {
-		MPU6050_Get_Gyro_Scale(&myGyroScaled);
+  while (c < 200)
+  {
+    MPU6050_Get_Gyro_Scale(&myGyroScaled);
     GyroX = myGyroScaled.x;
     GyroY = myGyroScaled.y;
     GyroZ = myGyroScaled.z;
     // Sum all readings
-    GyroErrorX = GyroErrorX + (GyroX / 131.0);
-    GyroErrorY = GyroErrorY + (GyroY / 131.0);
-    GyroErrorZ = GyroErrorZ + (GyroZ / 131.0);
+    GyroErrorX = GyroErrorX + (GyroX / 131.0f);
+    GyroErrorY = GyroErrorY + (GyroY / 131.0f);
+    GyroErrorZ = GyroErrorZ + (GyroZ / 131.0f);
     c++;
   }
   //Divide the sum by 200 to get the error value
@@ -224,82 +163,4 @@ void calculate_IMU_error(MPU_ConfigTypeDef myMpuConfig) {
   GyroErrorY = GyroErrorY / 200;
   GyroErrorZ = GyroErrorZ / 200;
 }
-
-/**
-  * @brief System Clock Configuration
-  * @retval None
-  */
-void SystemClock_Config(void)
-{
-  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
-
-  /** Configure the main internal regulator output voltage
-  */
-  __HAL_RCC_PWR_CLK_ENABLE();
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE3);
-  /** Initializes the RCC Oscillators according to the specified parameters
-  * in the RCC_OscInitTypeDef structure.
-  */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 8;
-  RCC_OscInitStruct.PLL.PLLN = 84;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-  RCC_OscInitStruct.PLL.PLLQ = 4;
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /** Initializes the CPU, AHB and APB buses clocks
-  */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
-
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
-  {
-    Error_Handler();
-  }
-}
-
-/* USER CODE BEGIN 4 */
-
-/* USER CODE END 4 */
-
-/**
-  * @brief  This function is executed in case of error occurrence.
-  * @retval None
-  */
-void Error_Handler(void)
-{
-  /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
-
-  /* USER CODE END Error_Handler_Debug */
-}
-
-#ifdef  USE_FULL_ASSERT
-/**
-  * @brief  Reports the name of the source file and the source line number
-  *         where the assert_param error has occurred.
-  * @param  file: pointer to the source file name
-  * @param  line: assert_param error line source number
-  * @retval None
-  */
-void assert_failed(uint8_t *file, uint32_t line)
-{
-  /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
-     tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-  /* USER CODE END 6 */
-}
-#endif /* USE_FULL_ASSERT */
-
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
