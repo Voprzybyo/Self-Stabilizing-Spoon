@@ -63,6 +63,7 @@ int c = 0;
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
 float map(float val, float I_Min, float I_Max, float O_Min, float O_Max);
+void calculate_IMU_error(MPU_ConfigTypeDef myMpuConfig);
 
 /* USER CODE END PFP */
 
@@ -132,6 +133,7 @@ int main(void)
 	
 	//__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 90);
 	//__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 90);
+	calculate_IMU_error(myMpuConfig);
 	HAL_Delay(5000);
 	
   /* USER CODE END 2 */
@@ -145,8 +147,8 @@ int main(void)
 		AccY = myAccelScaled.y / 16384.0;
 		AccZ = myAccelScaled.z / 16384.0;
 		
-		accAngleX = (atan(AccY / sqrt(pow(AccX, 2) + pow(AccZ, 2))) * 180 / 3.14159265358979323846) - 0.58; 
-		accAngleY = (atan(-1 * AccX / sqrt(pow(AccY, 2) + pow(AccZ, 2))) * 180 / 3.14159265358979323846) + 1.58;
+		accAngleX = (atan(AccY / sqrt(pow(AccX, 2) + pow(AccZ, 2))) * 180 / 3.14159265358979323846) - 0.89; 
+		accAngleY = (atan(-1 * AccX / sqrt(pow(AccY, 2) + pow(AccZ, 2))) * 180 / 3.14159265358979323846) + 0.146;
 		
 		previousTime = currentTime;
 		currentTime = HAL_GetTick();
@@ -157,9 +159,9 @@ int main(void)
 		GyroY = myGyroScaled.y / 131.0;
 		GyroZ = myGyroScaled.z / 131.0;
 		
-		GyroX = GyroX + 0.56; // GyroErrorX ~(-0.56)
-		GyroY = GyroY - 2; // GyroErrorY ~(2)
-		GyroZ = GyroZ + 0.79;
+		GyroX = GyroX - 0.033; // GyroErrorX ~(-0.56)
+		GyroY = GyroY - 0.028; // GyroErrorY ~(2)
+		GyroZ = GyroZ + 0.004;
 	
 		gyroAngleX = GyroX * elapsedTime; // deg/s * s = deg
 		gyroAngleY =  GyroY * elapsedTime;
@@ -169,15 +171,15 @@ int main(void)
 		pitch = (0.96 * gyroAngleY + 0.04 * accAngleY) * 180 / 3.14159265358979323846 ;
 		
 		
-	rollCounter = map(roll, -180, 180, 450, 2350);
-		pitchCounter = map(pitch, -180, 180, 700, 2600);
+		rollCounter = map((int) roll, -180, 180, 450, 2350);
+		pitchCounter = map((int) pitch , -180, 180, 700, 2600);
 
-			__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, rollCounter);
-			__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, pitchCounter);
+		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, rollCounter);
+		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, pitchCounter);
 	
 			
 		
-		HAL_Delay(100);
+		//HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }
@@ -185,6 +187,42 @@ int main(void)
 float map(float val, float I_Min, float I_Max, float O_Min, float O_Max)
 {
 		return(((val-I_Min)*((O_Max-O_Min)/(I_Max-I_Min)))+O_Min);
+}
+
+void calculate_IMU_error(MPU_ConfigTypeDef myMpuConfig) {
+  // We can call this funtion in the setup section to calculate the accelerometer and gyro data error. From here we will get the error values used in the above equations printed on the Serial Monitor.
+  // Note that we should place the IMU flat in order to get the proper values, so that we then can the correct values
+  // Read accelerometer values 200 times
+  while (c < 200) {
+		MPU6050_Get_Accel_Scale(&myAccelScaled);		
+    AccX = myAccelScaled.x / 16384.0 ;
+    AccY = myAccelScaled.y / 16384.0 ;
+    AccZ = myAccelScaled.z / 16384.0 ;
+    // Sum all readings
+    AccErrorX = AccErrorX + ((atan((AccY) / sqrt(pow((AccX), 2) + pow((AccZ), 2))) * 180 / 3.14159265358979323846));
+    AccErrorY = AccErrorY + ((atan(-1 * (AccX) / sqrt(pow((AccY), 2) + pow((AccZ), 2))) * 180 / 3.14159265358979323846));
+    c++;
+  }
+  //Divide the sum by 200 to get the error value
+  AccErrorX = AccErrorX / 200;
+  AccErrorY = AccErrorY / 200;
+  c = 0;
+  // Read gyro values 200 times
+  while (c < 200) {
+		MPU6050_Get_Gyro_Scale(&myGyroScaled);
+    GyroX = myGyroScaled.x;
+    GyroY = myGyroScaled.y;
+    GyroZ = myGyroScaled.z;
+    // Sum all readings
+    GyroErrorX = GyroErrorX + (GyroX / 131.0);
+    GyroErrorY = GyroErrorY + (GyroY / 131.0);
+    GyroErrorZ = GyroErrorZ + (GyroZ / 131.0);
+    c++;
+  }
+  //Divide the sum by 200 to get the error value
+  GyroErrorX = GyroErrorX / 200;
+  GyroErrorY = GyroErrorY / 200;
+  GyroErrorZ = GyroErrorZ / 200;
 }
 
 /**
