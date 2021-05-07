@@ -23,7 +23,7 @@
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
-#include "math.h"
+#include <math.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -62,7 +62,7 @@ int c = 0;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
+float map(float val, float I_Min, float I_Max, float O_Min, float O_Max);
 
 /* USER CODE END PFP */
 
@@ -105,8 +105,11 @@ int main(void)
   MX_TIM1_Init();
 	
   /* USER CODE BEGIN 2 */
-	//int foo = 700;
-	//int bar = 700;
+	volatile int rollCounter = 0;
+	volatile int pitchCounter = 0;
+	
+	volatile int cntOne = 0;
+	volatile int cntTwo = 0;
 	
 	
 	
@@ -116,8 +119,8 @@ int main(void)
   //2. Configure Accel and Gyro parameters
   myMpuConfig.Accel_Full_Scale = AFS_SEL_2g;
   myMpuConfig.ClockSource = Internal_8MHz;
-  myMpuConfig.CONFIG_DLPF = DLPF_184A_188G_Hz;
-  myMpuConfig.Gyro_Full_Scale = FS_SEL_500;
+  myMpuConfig.CONFIG_DLPF = DLPF_21A_20G_Hz;
+  myMpuConfig.Gyro_Full_Scale = FS_SEL_250;
   myMpuConfig.Sleep_Mode_Bit = 0; //1: sleep mode, 0: normal mode
   MPU6050_Config(&myMpuConfig);
 
@@ -126,82 +129,17 @@ int main(void)
 	
 	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 1400);
 	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 1900);
-	HAL_Delay(1000);
+	
+	//__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 90);
+	//__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 90);
+	HAL_Delay(5000);
 	
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
-  {
-		/*
-		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 450);
-		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 700);
-		HAL_Delay(2000);
-		
-		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 1450);
-		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 1700);
-    HAL_Delay(2000);
-		
-		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 2350);
-		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 2600);
-		HAL_Delay(2000);
-		*/
-		/* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
-    //		//Raw data
-    //MPU6050_Get_Accel_RawData(&myAccelRaw);
-    //MPU6050_Get_Gyro_RawData(&myGyroRaw);
-
-    //Scaled data
-    // MPU6050_Get_Accel_Scale(&myAccelScaled);
-    // MPU6050_Get_Gyro_Scale(&myGyroScaled);
-
-    //HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-    //HAL_Delay(10);
-		
-		//__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 700);
-		//__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 700);
-		//HAL_Delay(1000);
-		
-		/*
-		MPU6050_Get_Accel_Scale(&myAccelScaled);
-    MPU6050_Get_Gyro_Scale(&myGyroScaled);
-		
-		if(myGyroScaled.y > SENSITIVITY)
-		{
-			foo += 50;
-			if(foo > 2600)
-				foo = 2600;
-			__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, foo);
-		}
-		
-		if(myGyroScaled.y < -SENSITIVITY)
-		{
-			foo -= 50;
-			if(foo < 700)
-				foo = 700;
-			__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, foo);
-		}
-		if(myGyroScaled.x > SENSITIVITY)
-		{
-			bar += 50;
-			if(bar > 2250)
-				bar = 2250;
-			__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, bar);
-		}
-		
-		if(myGyroScaled.x < -SENSITIVITY)
-		{
-			bar -= 50;
-			if(bar < 450)
-				bar = 450;
-			__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, bar);
-		}
-		HAL_Delay(10);
-		*/
-		
+  {	
 		MPU6050_Get_Accel_Scale(&myAccelScaled);		
 		AccX = myAccelScaled.x / 16384.0;
 		AccY = myAccelScaled.y / 16384.0;
@@ -223,15 +161,30 @@ int main(void)
 		GyroY = GyroY - 2; // GyroErrorY ~(2)
 		GyroZ = GyroZ + 0.79;
 	
-		gyroAngleX = gyroAngleX + GyroX * elapsedTime; // deg/s * s = deg
-		gyroAngleY = gyroAngleY + GyroY * elapsedTime;
-		yaw =  yaw + GyroZ * elapsedTime;
+		gyroAngleX = GyroX * elapsedTime; // deg/s * s = deg
+		gyroAngleY =  GyroY * elapsedTime;
 		
-		roll = 0.96 * gyroAngleX + 0.04 * accAngleX;
-		pitch = 0.96 * gyroAngleY + 0.04 * accAngleY;
+		yaw =  GyroZ * elapsedTime;	
+		roll = (0.96 * gyroAngleX + 0.04 * accAngleX) * 180 / 3.14159265358979323846;
+		pitch = (0.96 * gyroAngleY + 0.04 * accAngleY) * 180 / 3.14159265358979323846 ;
+		
+		
+	rollCounter = map(roll, -180, 180, 450, 2350);
+		pitchCounter = map(pitch, -180, 180, 700, 2600);
+
+			__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, rollCounter);
+			__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, pitchCounter);
+	
+			
+		
 		HAL_Delay(100);
   }
   /* USER CODE END 3 */
+}
+
+float map(float val, float I_Min, float I_Max, float O_Min, float O_Max)
+{
+		return(((val-I_Min)*((O_Max-O_Min)/(I_Max-I_Min)))+O_Min);
 }
 
 /**
