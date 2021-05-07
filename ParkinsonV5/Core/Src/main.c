@@ -26,7 +26,8 @@
 #include "TJ_MPU6050.h"
 #include "Config.h"
 
-#define SENSITIVITY 80
+#define SENSITIVITY 5
+
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
@@ -61,15 +62,15 @@ int main(void)
   volatile int rollCounter = 0;
   volatile int pitchCounter = 0;
 
-  volatile int cntOne = 0;
-  volatile int cntTwo = 0;
+  volatile int previousRoll = 1400;
+  volatile int previousPitch = 1900;
 
   MPU6050_Init(&hi2c1); //  Initialise the MPU6050 module and I2C
 
   //Configure Accel and Gyro parameters
   myMpuConfig.Accel_Full_Scale = AFS_SEL_2g;
   myMpuConfig.ClockSource = Internal_8MHz;
-  myMpuConfig.CONFIG_DLPF = DLPF_21A_20G_Hz;
+  myMpuConfig.CONFIG_DLPF = DLPF_5_Hz;
   myMpuConfig.Gyro_Full_Scale = FS_SEL_250;
   myMpuConfig.Sleep_Mode_Bit = 0; //1: sleep mode, 0: normal mode
   MPU6050_Config(&myMpuConfig);
@@ -116,10 +117,20 @@ int main(void)
     rollCounter = map((int)roll, -180, 180, 450, 2350);
     pitchCounter = map((int)pitch, -180, 180, 700, 2600);
 
-    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, rollCounter);
-    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, pitchCounter);
+		if(rollCounter > previousRoll )
+			previousRoll += SENSITIVITY;
+		else
+			previousRoll -= SENSITIVITY;
+	
+		if(pitchCounter > previousPitch )
+			previousPitch += SENSITIVITY;
+		else
+			previousPitch -= SENSITIVITY;
+		
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, previousRoll);
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, previousPitch);
 
-    //HAL_Delay(10);
+    HAL_Delay(5);
   }
 }
 
