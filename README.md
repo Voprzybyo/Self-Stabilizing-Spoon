@@ -6,7 +6,6 @@
 * [Screenshots](#screenshots)
 * [Technologies](#technologies)
 * [Setup](#setup)
-* [Features](#features)
 * [Status](#status)
 
 ## General info
@@ -24,8 +23,5 @@ Coming soon
 ## Setup
 Coming soon
 
-## Features
-Coming soon
-
 ## Status
-Project is: _in_progress_
+Project is: Done
