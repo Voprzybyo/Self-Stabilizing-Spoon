@@ -9,7 +9,7 @@
 * [Status](#status)
 
 ## General info
-Project focuses on creation of Self Stabilizing Spoon with disabilities such as Parkinson's disease. During the development of the project libraries allowing usage of MPU6050 gyroscope/accelometer created by user [@MYaqoobEmbedded](https://github.com/MYaqoobEmbedded) were utilized. GNU License placed in them was strictly followed. Project is still under development. 
+Project focuses on creation of Self Stabilizing Spoon with disabilities such as Parkinson's disease. During the development of the project libraries allowing usage of MPU6050 gyroscope/accelometer created by user [@MYaqoobEmbedded](https://github.com/MYaqoobEmbedded) were utilized. GNU License placed in them was strictly followed. Calculations were made based on article provided by howtomechatronics.com.
 
 ## Screenshots
 Coming soon	
